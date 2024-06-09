@@ -1,15 +1,15 @@
+import { USERS_SERVICE } from '@/shared';
 import { Controller, Get, Inject, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 
-@Controller()
-export class AppController {
+@Controller('users')
+export class UsersController {
   constructor(
-    // @Inject('AUTH_SERVICE') private readonly authService: ClientProxy,
-    @Inject('USERS_SERVICE') private readonly usersService: ClientProxy,
+    @Inject(USERS_SERVICE) private readonly usersService: ClientProxy,
   ) {}
 
-  @Get('users')
+  @Get('getAll')
   async getUsers() {
     const users = await firstValueFrom(
       this.usersService.send(
@@ -31,7 +31,7 @@ export class AppController {
     };
   }
 
-  @Post('users')
+  @Post('')
   async createUser() {
     try {
       const newUser = await firstValueFrom(

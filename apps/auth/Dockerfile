@@ -4,9 +4,9 @@ WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN npm cache clean --force
 RUN npm install --legacy-peer-deps
 
+# Копіюємо всі файли з поточної директорії у контейнер
 COPY . .
 
 CMD ["node", "dist/apps/auth/main"]
