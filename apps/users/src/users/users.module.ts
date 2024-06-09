@@ -1,7 +1,12 @@
 import { Module } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { PostgresDBModule, RmqModule, UserEntity } from '@/shared';
+import {
+  PostgresDBModule,
+  RmqModule,
+  UserEntity,
+  UsersRepository,
+} from '@/shared';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
@@ -11,6 +16,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     TypeOrmModule.forFeature([UserEntity]),
   ],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [
+    UsersService,
+    {
+      provide: 'UsersRepositoryInterface',
+      useClass: UsersRepository,
+    },
+  ],
 })
 export class UsersModule {}
