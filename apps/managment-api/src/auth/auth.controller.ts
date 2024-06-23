@@ -4,6 +4,7 @@ import {
   CreateUserDto,
   DEFAULT_ERROR,
   LoginUserDto,
+  UserRefreshRequest,
   UserRequest,
 } from '@/shared';
 import {
@@ -20,6 +21,7 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { RpcErrorToHttpException } from '../utils/rpc-exception.handler';
+import { RefreshAuthGuard } from '@/shared/guards/refresh.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -81,5 +83,35 @@ export class AuthController {
   @Get('profile')
   getProfile(@Request() req: UserRequest) {
     return req.user;
+  }
+
+  @UseGuards(RefreshAuthGuard)
+  @Get('refreshToken')
+  async refreshToken(@Request() req: UserRefreshRequest) {
+    console.log('req.user', req.user);
+    console.log('req.refreshToken', req.refreshToken);
+    try {
+      const response = await firstValueFrom(
+        this.authService.send(
+          {
+            cmd: 'refresh-token',
+          },
+          {
+            user: req.user,
+            refreshToken: req.refreshToken,
+          },
+        ),
+      );
+
+      console.log('response', response);
+
+      return {
+        message: 'Token refreshed',
+        status: HttpStatus.CREATED,
+        data: response,
+      };
+    } catch (error) {
+      throw new RpcErrorToHttpException(error.response || DEFAULT_ERROR);
+    }
   }
 }

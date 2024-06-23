@@ -1,12 +1,14 @@
 import {
   USERS_SERVICE,
   UserEntity,
+  UserEntityWithoutPassword,
   UserJwt,
   UserRepositoryInterface,
 } from '@/shared';
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   UnauthorizedException,
@@ -17,6 +19,14 @@ import { CreateUserDto } from '../../../libs/shared/src/dtos/auth/CreateUser.dto
 import { firstValueFrom } from 'rxjs';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { LoginUserDto } from '../../../libs/shared/src/dtos/auth/LoginUser.dto';
+import { ConfigService } from '@nestjs/config';
+import {
+  LoginResponse,
+  RegisterResponse,
+  Tokens,
+} from './types/auth.interfaces';
+import { RedisCacheService } from '@/shared/services/redis.service';
+import { AUTH_REFRESH_TOKEN_PREFIX } from '@/shared/constants/redis';
 
 @Injectable()
 export class AuthService {
@@ -25,15 +35,15 @@ export class AuthService {
     @Inject('UsersRepositoryInterface')
     private readonly usersRepository: UserRepositoryInterface,
     @Inject(USERS_SERVICE) private readonly usersService: ClientProxy,
+    private readonly configService: ConfigService,
+    private readonly redisService: RedisCacheService,
   ) {}
-  getHello(): string {
-    return 'Hello World!!!!!';
-  }
+
   async hashPassword(password: string): Promise<string> {
     return bcrypt.hash(password, 12);
   }
 
-  async register(newUser: Readonly<CreateUserDto>): Promise<UserEntity> {
+  async register(newUser: Readonly<CreateUserDto>): Promise<RegisterResponse> {
     const { firstName, lastName, email, password } = newUser;
 
     const existingUser = await firstValueFrom(
@@ -47,8 +57,6 @@ export class AuthService {
       ),
     );
 
-    console.log('existingUser', existingUser);
-
     if (existingUser) {
       throw new RpcException(
         new ConflictException('An account with that email already exists!'),
@@ -56,8 +64,6 @@ export class AuthService {
     }
 
     const hashedPassword = await this.hashPassword(password);
-
-    console.log('newUser', newUser);
 
     const savedUser = await this.usersRepository.save({
       firstName,
@@ -67,7 +73,13 @@ export class AuthService {
     });
 
     delete savedUser.password;
-    return savedUser;
+
+    const tokens = await this.getTokens(savedUser);
+    const redisKey = `${AUTH_REFRESH_TOKEN_PREFIX}${savedUser.id}`;
+
+    await this.redisService.set(redisKey, tokens.refreshToken);
+
+    return { user: savedUser, tokens };
   }
 
   async doesPasswordMatch(
@@ -103,7 +115,7 @@ export class AuthService {
     return user;
   }
 
-  async login(existingUser: Readonly<LoginUserDto>) {
+  async login(existingUser: Readonly<LoginUserDto>): Promise<LoginResponse> {
     const { email, password } = existingUser;
     const user = await this.validateUser(email, password);
 
@@ -113,18 +125,47 @@ export class AuthService {
 
     delete user.password;
 
-    const jwt = await this.jwtService.signAsync({ user });
+    const tokens = await this.getTokens(user);
+    const redisKey = `${AUTH_REFRESH_TOKEN_PREFIX}${user.id}`;
 
-    return { token: jwt, user };
+    await this.redisService.set(redisKey, tokens.refreshToken);
+
+    return { tokens: tokens, user };
   }
 
-  async verifyJwt(jwt: string): Promise<{ user: UserEntity; exp: number }> {
+  async logout(userId: string) {
+    const redisKey = `${AUTH_REFRESH_TOKEN_PREFIX}${userId}`;
+    return await this.redisService.del(redisKey);
+  }
+
+  async verifyJwt(
+    jwt: string,
+  ): Promise<{ user: UserEntityWithoutPassword; exp: number }> {
     if (!jwt) {
-      throw new UnauthorizedException();
+      throw new RpcException(new UnauthorizedException());
     }
 
     try {
-      const { user, exp } = await this.jwtService.verifyAsync(jwt);
+      const { user, exp } = await this.jwtService.verifyAsync(jwt, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+      });
+      return { user, exp };
+    } catch (error) {
+      throw new RpcException(new UnauthorizedException());
+    }
+  }
+
+  async verifyRefreshJwt(
+    jwt: string,
+  ): Promise<{ user: UserEntityWithoutPassword; exp: number }> {
+    if (!jwt) {
+      throw new RpcException(new UnauthorizedException());
+    }
+
+    try {
+      const { user, exp } = await this.jwtService.verifyAsync(jwt, {
+        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+      });
       return { user, exp };
     } catch (error) {
       throw new RpcException(new UnauthorizedException());
@@ -137,7 +178,86 @@ export class AuthService {
     try {
       return this.jwtService.decode(jwt) as UserJwt;
     } catch (error) {
-      throw new BadRequestException();
+      throw new RpcException(new BadRequestException());
     }
+  }
+
+  async getTokens(user: UserEntity): Promise<Tokens> {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(
+        {
+          user,
+        },
+        {
+          secret: this.configService.get<string>('JWT_SECRET'),
+          expiresIn: `${this.configService.get<string>('JWT_EXPIRATION')}s`,
+        },
+      ),
+      this.jwtService.signAsync(
+        {
+          user,
+        },
+        {
+          secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+          expiresIn: `${this.configService.get<string>(
+            'JWT_REFRESH_EXPIRATION',
+          )}s`,
+        },
+      ),
+    ]);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  hashData(data: string) {
+    return bcrypt.hash(data, 12);
+  }
+
+  async refreshAccessToken(
+    user: UserEntityWithoutPassword,
+    refreshToken: string,
+  ) {
+    const refreshTokensMatch = this.isRefreshTokensMatches(
+      user.id,
+      refreshToken,
+    );
+    if (!refreshTokensMatch) throw new RpcException(new ForbiddenException());
+    const userFromHeader = (await this.getUserFromHeader(refreshToken)).user;
+    if (!userFromHeader) {
+      throw new RpcException(new BadRequestException());
+    }
+
+    const newAccessToken = await this.generateNewAccessToken(userFromHeader);
+    return newAccessToken;
+  }
+
+  async getRedisRefreshToken(userId: string) {
+    const redisKey = `${AUTH_REFRESH_TOKEN_PREFIX}${userId}`;
+    return await this.redisService.get(redisKey);
+  }
+
+  async isRefreshTokensMatches(
+    userId: number,
+    refreshToken: string,
+  ): Promise<boolean> {
+    const refreshTokenFromRedis = await this.getRedisRefreshToken(`${userId}`);
+    return refreshTokenFromRedis === refreshToken;
+  }
+
+  async generateNewAccessToken(user: UserEntityWithoutPassword) {
+    const newToken = await this.jwtService.signAsync(
+      {
+        user,
+      },
+      {
+        secret: this.configService.get<string>('JWT_SECRET'),
+        expiresIn: `${this.configService.get<string>('JWT_EXPIRATION')}s`,
+      },
+    );
+
+    return newToken;
   }
 }
