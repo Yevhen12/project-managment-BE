@@ -1,8 +1,9 @@
-import { Controller } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CreateUserDto } from './dtos/CreateUserDto';
 import { encode } from 'punycode';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller()
 export class UsersController {

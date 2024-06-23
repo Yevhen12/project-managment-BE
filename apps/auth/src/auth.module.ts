@@ -14,6 +14,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtGuard } from './guards/auth-jwt.guard';
+import { RefreshTokenStrategy } from './strategies/refresh.strategy';
+import { RedisModule } from '@/shared/modules/redis.module';
+import { JwtResfreshGuard } from './guards/refresh-jwt.guard';
+// import { RefreshTokenStrategy } from './strategies/refresh.strategy';
 
 @Module({
   imports: [
@@ -28,21 +32,17 @@ import { JwtGuard } from './guards/auth-jwt.guard';
     //     JWT_EXPIRATION: Joi.string().required(),
     //   }),
     // }),
-    JwtModule.registerAsync({
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'),
-        signOptions: {
-          expiresIn: `${configService.get<string>('JWT_EXPIRATION')}s`,
-        },
-      }),
-      inject: [ConfigService],
-    }),
+    JwtModule.register({}),
+    RedisModule,
   ],
   controllers: [AuthController],
   providers: [
     JwtGuard,
+    JwtResfreshGuard,
     JwtStrategy,
     AuthService,
+    ConfigService,
+    RefreshTokenStrategy,
     {
       provide: 'UsersRepositoryInterface',
       useClass: UsersRepository,

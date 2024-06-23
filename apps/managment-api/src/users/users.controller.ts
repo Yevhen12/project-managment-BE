@@ -1,5 +1,5 @@
-import { USERS_SERVICE } from '@/shared';
-import { Controller, Get, Inject, Post } from '@nestjs/common';
+import { AuthGuard, USERS_SERVICE } from '@/shared';
+import { Controller, Get, Inject, Post, UseGuards } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 
@@ -9,6 +9,7 @@ export class UsersController {
     @Inject(USERS_SERVICE) private readonly usersService: ClientProxy,
   ) {}
 
+  @UseGuards(AuthGuard)
   @Get('getAll')
   async getUsers() {
     const users = await firstValueFrom(
