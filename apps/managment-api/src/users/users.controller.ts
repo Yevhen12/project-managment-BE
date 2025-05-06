@@ -1,5 +1,20 @@
-import { AuthGuard, USERS_SERVICE } from '@/shared';
-import { Controller, Get, Inject, Post, UseGuards } from '@nestjs/common';
+import {
+  AuthGuard,
+  UpdateUserProfileDto,
+  UserRequest,
+  USERS_SERVICE,
+} from '@/shared';
+import {
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 
@@ -12,17 +27,13 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Get('getAll')
   async getUsers() {
+    console.log('ERERERE');
     const users = await firstValueFrom(
       this.usersService.send(
         {
           cmd: 'get-users',
         },
-        {
-          users: [
-            { id: '1', user: 'Yevhen' },
-            { id: '2', user: 'Lys' },
-          ],
-        },
+        {},
       ),
     );
     return {
@@ -40,12 +51,7 @@ export class UsersController {
           {
             cmd: 'create-user',
           },
-          {
-            firstName: 'test name',
-            lastName: 'test last name',
-            email: 'test@gmail.com',
-            password: 'test password',
-          },
+          {},
         ),
       );
 
@@ -59,5 +65,50 @@ export class UsersController {
     } catch (err) {
       console.log('err', err);
     }
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('profile')
+  getProfile(@Request() req: UserRequest) {
+    return req.user;
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('fullProfile')
+  async getFullProfile(@Request() req: UserRequest) {
+    const user = await firstValueFrom(
+      this.usersService.send(
+        { cmd: 'get-user' },
+        {
+          id: req.user.id,
+        },
+      ),
+    );
+
+    return {
+      status: 200,
+      data: user,
+      message: 'User successfully recived',
+    };
+  }
+
+  @UseGuards(AuthGuard)
+  @Patch('profile')
+  async updateProfile(@Body() dto: UpdateUserProfileDto, @Req() req: any) {
+    const updatedUser = await firstValueFrom(
+      this.usersService.send(
+        { cmd: 'update-profile' },
+        {
+          id: req.user.id,
+          data: dto,
+        },
+      ),
+    );
+
+    return {
+      status: 200,
+      data: updatedUser,
+      message: 'User profile updated',
+    };
   }
 }

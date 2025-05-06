@@ -14,10 +14,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from '../../../libs/shared/src/dtos/auth/CreateUser.dto';
-import { firstValueFrom } from 'rxjs';
-import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { LoginUserDto } from '../../../libs/shared/src/dtos/auth/LoginUser.dto';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -27,6 +27,7 @@ import {
 } from './types/auth.interfaces';
 import { RedisCacheService } from '@/shared/services/redis.service';
 import { AUTH_REFRESH_TOKEN_PREFIX } from '@/shared/constants/redis';
+import { APPLICATION_ROLES } from '@/shared/constants/enums';
 
 @Injectable()
 export class AuthService {
@@ -119,8 +120,10 @@ export class AuthService {
     const { email, password } = existingUser;
     const user = await this.validateUser(email, password);
 
+    console.log('test', user);
+
     if (!user) {
-      throw new RpcException(new UnauthorizedException());
+      throw new RpcException(new BadRequestException('Bad credentials'));
     }
 
     delete user.password;
@@ -221,7 +224,7 @@ export class AuthService {
     refreshToken: string,
   ) {
     const refreshTokensMatch = this.isRefreshTokensMatches(
-      user.id,
+      +user.id,
       refreshToken,
     );
     if (!refreshTokensMatch) throw new RpcException(new ForbiddenException());
