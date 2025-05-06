@@ -2,12 +2,7 @@ import { Request } from 'express';
 import { UserEntity } from '../entities/user.entity';
 
 export interface UserRequest extends Request {
-  user?: {
-    id: number;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
+  user?: UserEntity;
 }
 
 export interface UserRefreshRequest extends Request {

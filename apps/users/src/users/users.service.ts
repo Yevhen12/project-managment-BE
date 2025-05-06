@@ -1,8 +1,13 @@
-import { UserEntity, UserRepositoryInterface } from '@/shared';
+import {
+  UpdateUserProfileDto,
+  UserEntity,
+  UserRepositoryInterface,
+} from '@/shared';
 import {
   ConflictException,
   Inject,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
@@ -16,21 +21,25 @@ export class UsersService {
   ) {}
 
   async getUsers(): Promise<UserEntity[]> {
-    return await this.usersRepository.findAll();
+    const users = await this.usersRepository.findAll({
+      relations: ['applicationRole'],
+    });
+
+    return users;
   }
 
-  async getUserById(id: number): Promise<UserEntity> {
+  async getUserById(id: string): Promise<UserEntity> {
     return await this.usersRepository.findOneById(id);
   }
 
   async findByEmail(email: string): Promise<UserEntity> {
     return this.usersRepository.findByCondition({
       where: { email },
-      select: ['id', 'firstName', 'lastName', 'email', 'password'],
+      select: ['id', 'firstName', 'lastName', 'email', 'password', 'isActive'],
     });
   }
 
-  async findById(id: number): Promise<UserEntity> {
+  async findById(id: string): Promise<UserEntity> {
     return this.usersRepository.findOneById(id);
   }
 
@@ -62,6 +71,35 @@ export class UsersService {
     if (!passwordIsValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    return user;
+  }
+
+  async updateProfile(
+    id: string,
+    data: UpdateUserProfileDto,
+  ): Promise<UserEntity> {
+    await this.usersRepository.update(id, data);
+    return this.usersRepository.findOneById(id); // повертаємо оновлений профіль
+  }
+
+  async getUser(id: string): Promise<Partial<UserEntity>> {
+    const user = await this.usersRepository.findByCondition({
+      where: { id },
+      select: [
+        'id',
+        'firstName',
+        'lastName',
+        'email',
+        'phone',
+        'avatarUrl',
+        'bio',
+      ],
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
     return user;
   }
 }

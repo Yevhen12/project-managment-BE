@@ -4,14 +4,21 @@ import { MessagePattern, Payload } from '@nestjs/microservices';
 import { CreateUserDto } from './dtos/CreateUserDto';
 import { encode } from 'punycode';
 import { AuthGuard } from '@nestjs/passport';
+import { UpdateUserProfileDto } from '@/shared';
 
 @Controller()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @MessagePattern({ cmd: 'get-users' })
-  createUser(@Payload() data: any) {
+  getUsers(@Payload() data: any) {
+    console.log('On CONTIOLLER USERS', data);
     return this.usersService.getUsers();
+  }
+
+  @MessagePattern({ cmd: 'get-user' })
+  getUser(@Payload() payload: { id: string }) {
+    return this.usersService.getUser(payload.id);
   }
 
   @MessagePattern({ cmd: 'create-user' })
@@ -28,5 +35,12 @@ export class UsersController {
   async findByEmail(@Payload() payload: { email: string }) {
     console.log('IN find-by-email', payload.email);
     return this.usersService.findByEmail(payload.email);
+  }
+
+  @MessagePattern({ cmd: 'update-profile' })
+  async updateProfile(
+    @Payload() payload: { id: string; data: UpdateUserProfileDto },
+  ) {
+    return this.usersService.updateProfile(payload.id, payload.data);
   }
 }

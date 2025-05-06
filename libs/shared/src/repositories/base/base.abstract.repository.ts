@@ -9,7 +9,7 @@ import {
 import { BaseInterfaceRepository } from '../../interfaces/base.interface.repository';
 
 interface HasId {
-  id: number;
+  id: string;
 }
 
 export abstract class BaseAbstractRepository<T extends HasId>
@@ -57,5 +57,8 @@ export abstract class BaseAbstractRepository<T extends HasId>
   }
   public async preload(entityLike: DeepPartial<T>): Promise<T> {
     return await this.entity.preload(entityLike);
+  }
+  async update(id: string, data: Partial<any>): Promise<any> {
+    return this.entity.update(id, data);
   }
 }

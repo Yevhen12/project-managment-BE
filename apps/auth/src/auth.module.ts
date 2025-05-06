@@ -4,11 +4,19 @@ import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import {
+  AttachmentEntity,
+  CommentEntity,
+  LabelEntity,
   PostgresDBModule,
+  ProjectEntity,
   RmqModule,
-  USERS_SERVICE,
+  SprintEntity,
+  TaskEntity,
   UserEntity,
+  USERS_SERVICE,
   UsersRepository,
+  TeamMemberEntity,
+  InviteEntity,
 } from '@/shared';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
@@ -23,7 +31,17 @@ import { JwtResfreshGuard } from './guards/refresh-jwt.guard';
   imports: [
     RmqModule.registerRmq(USERS_SERVICE, process.env.RABBITMQ_USERS_QUEUE),
     PostgresDBModule,
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([
+      UserEntity,
+      TaskEntity,
+      ProjectEntity,
+      CommentEntity,
+      SprintEntity,
+      AttachmentEntity,
+      LabelEntity,
+      TeamMemberEntity,
+      InviteEntity,
+    ]),
     PassportModule,
     // ConfigModule.forRoot({
     //   isGlobal: true,
