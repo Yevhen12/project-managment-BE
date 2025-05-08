@@ -12,7 +12,6 @@ export class UsersController {
 
   @MessagePattern({ cmd: 'get-users' })
   getUsers(@Payload() data: any) {
-    console.log('On CONTIOLLER USERS', data);
     return this.usersService.getUsers();
   }
 

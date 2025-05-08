@@ -5,8 +5,10 @@ import {
   AttachmentEntity,
   CommentEntity,
   InviteEntity,
+  InviteRepositiry,
   LabelEntity,
   PostgresDBModule,
+  PROJECT_SERVICE,
   ProjectEntity,
   ProjectRepository,
   RmqModule,
@@ -21,7 +23,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
-    RmqModule.registerRmq(USERS_SERVICE, process.env.RABBITMQ_PROJECTS_QUEUE),
+    RmqModule.registerRmq(PROJECT_SERVICE, process.env.RABBITMQ_PROJECTS_QUEUE),
+    RmqModule.registerRmq(USERS_SERVICE, process.env.RABBITMQ_USERS_QUEUE),
     PostgresDBModule,
     TypeOrmModule.forFeature([
       UserEntity,
@@ -45,6 +48,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     {
       provide: 'TeamMemberRepositoryInterface',
       useClass: TeamMemberRepository,
+    },
+    {
+      provide: 'InviteRepositiryInterface',
+      useClass: InviteRepositiry,
     },
   ],
 })

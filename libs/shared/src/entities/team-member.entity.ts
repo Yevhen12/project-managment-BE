@@ -4,33 +4,38 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
+  JoinColumn,
 } from 'typeorm';
 import { ProjectEntity } from './project.entity';
-
-export enum ProjectRole {
-  ADMIN = 'admin',
-  DEVELOPER = 'developer',
-  TESTER = 'tester',
-}
+import { PROJECT_ROLES } from '../constants/enums';
+import { UserEntity } from './user.entity';
 
 @Entity('team_members')
 export class TeamMemberEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @ManyToOne(() => UserEntity, { eager: false })
+  @JoinColumn({ name: 'userId' })
+  user: UserEntity;
+
   @Column()
   userId: string;
 
   @Column({
     type: 'enum',
-    enum: ProjectRole,
+    enum: PROJECT_ROLES,
   })
-  role: ProjectRole;
+  role: PROJECT_ROLES;
 
   @ManyToOne(() => ProjectEntity, (project) => project.teamMembers, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'projectId' })
   project: ProjectEntity;
+
+  @Column()
+  projectId: string;
 
   @CreateDateColumn()
   joinedAt: Date;

@@ -6,12 +6,7 @@ import {
   CreateDateColumn,
 } from 'typeorm';
 import { ProjectEntity } from './project.entity';
-
-export enum InviteStatus {
-  PENDING = 'pending',
-  ACCEPTED = 'accepted',
-  DECLINED = 'declined',
-}
+import { INVITE_STATUSES } from '../constants/enums';
 
 @Entity('invites')
 export class InviteEntity {
@@ -22,16 +17,23 @@ export class InviteEntity {
   email: string;
 
   @Column()
-  sentBy: string; // userId
+  sentBy: string; // userId хто запросив
 
-  @Column({ type: 'enum', enum: InviteStatus, default: InviteStatus.PENDING })
-  status: InviteStatus;
+  @Column({
+    type: 'enum',
+    enum: INVITE_STATUSES,
+    default: INVITE_STATUSES.PENDING,
+  })
+  status: INVITE_STATUSES;
 
   @Column()
-  role: string;
+  role: string; // developer, admin і т.д.
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @Column()
+  projectId: string;
 
   @ManyToOne(() => ProjectEntity, (project) => project.invites, {
     onDelete: 'CASCADE',

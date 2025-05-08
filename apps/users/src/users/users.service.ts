@@ -20,9 +20,18 @@ export class UsersService {
     private readonly usersRepository: UserRepositoryInterface,
   ) {}
 
-  async getUsers(): Promise<UserEntity[]> {
+  async getUsers(): Promise<Partial<UserEntity>[]> {
     const users = await this.usersRepository.findAll({
-      relations: ['applicationRole'],
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        phone: true,
+        avatarUrl: true,
+        bio: true,
+        isActive: true,
+      },
     });
 
     return users;

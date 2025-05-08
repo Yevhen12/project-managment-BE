@@ -27,7 +27,6 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Get('getAll')
   async getUsers() {
-    console.log('ERERERE');
     const users = await firstValueFrom(
       this.usersService.send(
         {
