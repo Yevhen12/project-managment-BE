@@ -14,21 +14,7 @@ import { SprintEntity } from './sprint.entity';
 import { CommentEntity } from './comment.entity';
 import { AttachmentEntity } from './attachment.entity';
 import { LabelEntity } from './label.entity';
-
-export enum TaskStatus {
-  TODO = 'TO_DO',
-  IN_PROGRESS = 'IN_PROGRESS',
-  QA_READY = 'QA_READY',
-  QA_TESTING = 'QA_TESTING',
-  REVIEW = 'REVIEW',
-  DONE = 'DONE',
-}
-
-export enum TaskPriority {
-  LOW = 'Low',
-  MEDIUM = 'Medium',
-  HIGH = 'High',
-}
+import { TASK_PRIORITIES, TASK_STATUSES } from '../constants/enums';
 
 @Entity('tasks')
 export class TaskEntity {
@@ -41,11 +27,11 @@ export class TaskEntity {
   @Column('text')
   description: string;
 
-  @Column({ type: 'enum', enum: TaskStatus })
-  status: TaskStatus;
+  @Column({ type: 'enum', enum: TASK_STATUSES })
+  status: TASK_STATUSES;
 
-  @Column({ type: 'enum', enum: TaskPriority })
-  priority: TaskPriority;
+  @Column({ type: 'enum', enum: TASK_PRIORITIES })
+  priority: TASK_PRIORITIES;
 
   @Column()
   assignee: string;
