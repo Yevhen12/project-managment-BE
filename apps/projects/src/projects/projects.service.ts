@@ -268,7 +268,6 @@ export class ProjectsService {
 
   async getProjectTeamMembers(projectId: string): Promise<TeamMemberEntity[]> {
     try {
-      console.log('projectId', projectId);
       return await this.teamMemberRepository.findAll({
         where: {
           project: {
