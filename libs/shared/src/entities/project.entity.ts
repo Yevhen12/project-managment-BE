@@ -4,12 +4,12 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
 } from 'typeorm';
 import { SprintEntity } from './sprint.entity';
 import { TaskEntity } from './task.entity';
 import { TeamMemberEntity } from './team-member.entity';
 import { InviteEntity } from './invite.entity';
+import { OneToMany } from 'typeorm';
 
 @Entity('projects')
 export class ProjectEntity {

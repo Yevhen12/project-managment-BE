@@ -19,6 +19,12 @@ export enum TASK_STATUSES {
   DONE = 'DONE',
 }
 
+export enum TASK_TYPES {
+  BUG = 'bug',
+  STORY = 'story',
+  TASK = 'task',
+}
+
 export enum TASK_PRIORITIES {
   LOW = 'Low',
   MEDIUM = 'Medium',

@@ -15,6 +15,7 @@ export * from './entities/sprint.entity';
 export * from './entities/task.entity';
 export * from './entities/team-member.entity';
 export * from './entities/invite.entity';
+export * from './entities/work-log.entity';
 
 // interfaces
 export * from './interfaces/rmq.interface';
@@ -55,10 +56,11 @@ export * from './dtos/projects/SendInvite.dto';
 export * from './dtos/projects/HandleInvite.dto';
 export * from './dtos/projects/UpdateTeamMemberRole.dto';
 export * from './dtos/projects/RemoveTeamMember.dto';
+export * from './dtos/projects/CreateTask.dto';
 
 //enums
 export * from './constants/enums';
 
 //utils
-
+export * from './utils/common';
 export * from './utils/exception-filter';

@@ -35,6 +35,12 @@ export class SprintEntity {
   @OneToMany(() => TaskEntity, (task) => task.sprint)
   tasks: TaskEntity[];
 
+  @Column({ default: false })
+  forcedFinished: boolean;
+
+  @Column({ type: 'timestamp', nullable: true })
+  completedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

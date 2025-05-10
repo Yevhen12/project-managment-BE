@@ -17,6 +17,7 @@ import {
   UsersRepository,
   TeamMemberEntity,
   InviteEntity,
+  WorkLogEntity,
 } from '@/shared';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
@@ -41,6 +42,7 @@ import { JwtResfreshGuard } from './guards/refresh-jwt.guard';
       LabelEntity,
       TeamMemberEntity,
       InviteEntity,
+      WorkLogEntity,
     ]),
     PassportModule,
     // ConfigModule.forRoot({

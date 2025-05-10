@@ -15,6 +15,7 @@ import {
   UsersRepository,
   TeamMemberEntity,
   InviteEntity,
+  WorkLogEntity,
 } from '@/shared';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
@@ -32,6 +33,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       LabelEntity,
       TeamMemberEntity,
       InviteEntity,
+      WorkLogEntity,
     ]),
   ],
   controllers: [UsersController],

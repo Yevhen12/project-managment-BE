@@ -15,6 +15,7 @@ import {
   TeamMemberEntity,
   InviteEntity,
   PROJECT_SERVICE,
+  WorkLogEntity,
 } from '@/shared';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth/auth.controller';
@@ -36,6 +37,7 @@ import { ProjectController } from './projects/projects.controller';
       LabelEntity,
       TeamMemberEntity,
       InviteEntity,
+      WorkLogEntity,
     ]),
   ],
   controllers: [UsersController, AuthController, ProjectController],

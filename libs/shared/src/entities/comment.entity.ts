@@ -4,8 +4,10 @@ import {
   Column,
   CreateDateColumn,
   ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { TaskEntity } from './task.entity';
+import { UserEntity } from './user.entity';
 
 @Entity('comments')
 export class CommentEntity {
@@ -14,6 +16,10 @@ export class CommentEntity {
 
   @Column()
   content: string;
+
+  @ManyToOne(() => UserEntity, { eager: true }) // ← щоб одразу підтягувався user
+  @JoinColumn({ name: 'authorId' }) // ← звʼязуємо з колонкою
+  author: UserEntity;
 
   @Column()
   authorId: string;

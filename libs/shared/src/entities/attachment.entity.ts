@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { TaskEntity } from './task.entity';
 
@@ -13,18 +14,22 @@ export class AttachmentEntity {
   id: string;
 
   @Column()
-  url: string;
+  url: string; // посилання на файл у S3
 
   @Column()
-  fileName: string;
+  fileName: string; // оригінальна назва файлу
 
   @Column()
-  uploadedBy: string;
+  uploadedBy: string; // userId того, хто завантажив
 
   @ManyToOne(() => TaskEntity, (task) => task.attachments, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'taskId' }) // Явно вказуємо FK
   task: TaskEntity;
+
+  @Column()
+  taskId: string; // <-- потрібно явно, щоб мати доступ до taskId без джойна
 
   @CreateDateColumn()
   createdAt: Date;
