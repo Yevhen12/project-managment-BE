@@ -23,6 +23,8 @@ import {
   Put,
   UploadedFile,
   UseInterceptors,
+  BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { RpcErrorToHttpException } from '../utils/rpc-exception.handler';
@@ -41,23 +43,25 @@ export class ProjectController {
   ) {}
 
   @UseGuards(AuthGuard)
-  @Get('getOne')
-  async getProject() {
-    console.log('ON GET PROJECT BY ID');
+  @Get('getOne/:projectId')
+  async getProject(@Req() req: any, @Param('projectId') projectId: string) {
+    const userId = req.user.id;
+
+    if (!projectId) {
+      throw new BadRequestException('Project ID is required');
+    }
+
     const project = await firstValueFrom(
       this.projectService.send(
-        {
-          cmd: 'get-project',
-        },
-        {
-          id: '119acd86-06ad-469b-8f15-a4e566c2d834',
-        },
+        { cmd: 'get-project' },
+        { id: projectId, userId },
       ),
     );
+
     return {
       status: 200,
       data: project,
-      message: 'Users recieved',
+      message: 'Project retrieved',
     };
   }
 
@@ -375,6 +379,24 @@ export class ProjectController {
         status: 200,
         data: task,
         message: 'Task updated successfully',
+      };
+    } catch (error) {
+      throw new RpcErrorToHttpException(error.response || DEFAULT_ERROR);
+    }
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('tasks/:id')
+  async getTaskById(@Param('id') id: string) {
+    try {
+      const task = await firstValueFrom(
+        this.projectService.send({ cmd: 'get-task' }, { id }),
+      );
+
+      return {
+        status: 200,
+        data: task,
+        message: 'Task retrieved successfully',
       };
     } catch (error) {
       throw new RpcErrorToHttpException(error.response || DEFAULT_ERROR);

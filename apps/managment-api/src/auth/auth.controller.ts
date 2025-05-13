@@ -29,7 +29,7 @@ export class AuthController {
     @Inject(AUTH_SERVICE) private readonly authService: ClientProxy,
   ) {}
 
-  @Get('login')
+  @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() user: LoginUserDto) {
     try {

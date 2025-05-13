@@ -6,6 +6,11 @@ import { RpcExceptionFilter } from '@/shared';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const PORT = process.env.PORT || 3000;
+
+  app.enableCors({
+    origin: 'http://localhost:3005', // або ['http://localhost:3005'] для масиву
+    credentials: true,
+  });
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new RpcExceptionFilter());
   await app.listen(PORT, () => {

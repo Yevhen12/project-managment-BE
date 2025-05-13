@@ -9,6 +9,7 @@ import {
   ProjectRepositoryInterface,
   RemoveTeamMemberDto,
   SendInviteDto,
+  SprintRepositoryInterface,
   TeamMemberEntity,
   TeamMemberRepositoryInterface,
   UpdateTeamMemberRoleDto,
@@ -33,29 +34,80 @@ export class ProjectsService {
     private readonly teamMemberRepository: TeamMemberRepositoryInterface,
     @Inject('InviteRepositiryInterface')
     private readonly inviteRepositiry: InviteRepositoryInterface,
+    @Inject('SprintRepositiryInterface')
+    private readonly sprintRepository: SprintRepositoryInterface,
     @Inject(USERS_SERVICE) private readonly usersService: ClientProxy,
   ) {}
-  async getProjectById(id: string): Promise<ProjectEntity> {
-    return await this.projectRepository.findOneById(id);
+  async getProjectById(id: string, userId: string): Promise<any> {
+    const project = await this.projectRepository.findByCondition({
+      where: { id },
+      relations: ['teamMembers', 'teamMembers.user', 'sprints', 'tasks'],
+    });
+
+    if (!project) {
+      throw new RpcException(new NotFoundException('Project not found'));
+    }
+
+    const activeSprint = project.sprints.find((s) => s.isActive);
+
+    const member = project.teamMembers.find((m) => m.userId === userId);
+
+    return {
+      id: project.id,
+      name: project.name,
+      description: project.description,
+      createdAt: project.createdAt,
+      updatedAt: project.updatedAt,
+      currentSprint: activeSprint || null,
+      teamMembers: project.teamMembers,
+      myRole: member?.role || null,
+    };
   }
 
-  async createProject(
-    data: CreateProjectDto,
-    creatorId: string,
-  ): Promise<ProjectEntity> {
-    console.log('ON CREATE');
+  async createProject(data: CreateProjectDto, creatorId: string): Promise<any> {
     const project = await this.projectRepository.save({
       name: data.name,
       description: data.description,
     });
 
-    await this.teamMemberRepository.save({
+    const membership = await this.teamMemberRepository.save({
       project,
       userId: creatorId,
       role: PROJECT_ROLES.ADMIN,
     });
 
-    return project;
+    const fullProject = await this.projectRepository.findByCondition({
+      where: { id: project.id },
+      relations: ['teamMembers', 'teamMembers.user', 'sprints'],
+    });
+
+    const activeSprint = fullProject.sprints.find((s) => s.isActive);
+    const teamMembers = fullProject.teamMembers.map((tm) => ({
+      id: tm.id,
+      user: {
+        id: tm.user.id,
+        firstName: tm.user.firstName,
+        lastName: tm.user.lastName,
+        email: tm.user.email,
+      },
+      role: tm.role,
+    }));
+
+    return {
+      id: fullProject.id,
+      name: fullProject.name,
+      description: fullProject.description,
+      teamMembers,
+      currentSprint: activeSprint
+        ? {
+            id: activeSprint.id,
+            name: activeSprint.name,
+            startDate: activeSprint.startDate,
+            endDate: activeSprint.endDate,
+          }
+        : null,
+      myRole: membership.role,
+    };
   }
 
   async getAllProjects(): Promise<ProjectEntity[]> {
@@ -64,13 +116,47 @@ export class ProjectsService {
     });
   }
 
-  async getUserProjects(userId: string): Promise<ProjectEntity[]> {
+  async getUserProjects(userId: string): Promise<any[]> {
     const memberships = await this.teamMemberRepository.findAll({
       where: { userId },
-      relations: ['project'],
+      relations: [
+        'project',
+        'project.teamMembers',
+        'project.teamMembers.user',
+        'project.sprints',
+      ],
     });
 
-    return memberships.map((m) => m.project);
+    return memberships.map((membership) => {
+      const project = membership.project;
+      const activeSprint = project.sprints.find((s) => s.isActive);
+      const teamMembers = project.teamMembers.map((tm) => ({
+        id: tm.id,
+        user: {
+          id: tm.user.id,
+          firstName: tm.user.firstName,
+          lastName: tm.user.lastName,
+          email: tm.user.email,
+        },
+        role: tm.role,
+      }));
+
+      return {
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        teamMembers,
+        currentSprint: activeSprint
+          ? {
+              id: activeSprint.id,
+              name: activeSprint.name,
+              startDate: activeSprint.startDate,
+              endDate: activeSprint.endDate,
+            }
+          : null,
+        myRole: membership.role,
+      };
+    });
   }
 
   async sendInvite(dto: SendInviteDto): Promise<InviteEntity> {
@@ -205,7 +291,8 @@ export class ProjectsService {
     }
   }
 
-  async getPendingInvitesForUser(userId: string): Promise<InviteEntity[]> {
+  async getPendingInvitesForUser(userId: string): Promise<any[]> {
+    // Отримуємо юзера, щоб дістати його email
     const user = await firstValueFrom(
       this.usersService.send({ cmd: 'get-user' }, { id: userId }),
     );
@@ -214,7 +301,8 @@ export class ProjectsService {
       throw new RpcException(new NotFoundException('User not found'));
     }
 
-    return this.inviteRepositiry.findAll({
+    // Тепер витягуємо всі pending інвайти на цей email
+    const invites = await this.inviteRepositiry.findAll({
       where: {
         email: user.email,
         status: INVITE_STATUSES.PENDING,
@@ -222,7 +310,68 @@ export class ProjectsService {
       relations: ['project'],
       order: { createdAt: 'DESC' },
     });
+
+    // enrich
+    const result = await Promise.all(
+      invites.map(async (invite) => {
+        const [team, activeSprint, sender] = await Promise.all([
+          this.teamMemberRepository.findAll({
+            where: { project: { id: invite.project.id } },
+          }),
+          this.sprintRepository.findByCondition({
+            where: {
+              project: { id: invite.project.id },
+              isActive: true,
+            },
+          }),
+          firstValueFrom(
+            this.usersService.send({ cmd: 'get-user' }, { id: invite.sentBy }),
+          ),
+        ]);
+
+        return {
+          id: invite.id,
+          role: invite.role,
+          status: invite.status,
+          createdAt: invite.createdAt,
+          projectId: invite.project.id,
+          project: {
+            id: invite.project.id,
+            name: invite.project.name,
+            description: invite.project.description,
+            createdAt: invite.project.createdAt,
+          },
+          teamSize: team.length,
+          currentSprint: activeSprint?.name || null,
+          createdBy: {
+            name: `${sender.firstName} ${sender.lastName}`,
+            email: sender.email,
+          },
+        };
+      }),
+    );
+
+    return result;
   }
+
+  // async getPendingInvitesForUser(userId: string): Promise<InviteEntity[]> {
+  //   const user = await firstValueFrom(
+  //     this.usersService.send({ cmd: 'get-user' }, { id: userId }),
+  //   );
+
+  //   if (!user || !user.email) {
+  //     throw new RpcException(new NotFoundException('User not found'));
+  //   }
+
+  //   return this.inviteRepositiry.findAll({
+  //     where: {
+  //       email: user.email,
+  //       status: INVITE_STATUSES.PENDING,
+  //     },
+  //     relations: ['project'],
+  //     order: { createdAt: 'DESC' },
+  //   });
+  // }
 
   async updateTeamMemberRole(
     dto: UpdateTeamMemberRoleDto,

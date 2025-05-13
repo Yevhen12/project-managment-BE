@@ -26,8 +26,8 @@ export class ProjectsController {
   ) {}
 
   @MessagePattern({ cmd: 'get-project' })
-  getUser(@Payload() payload: { id: string }) {
-    return this.projectsService.getProjectById(payload.id);
+  getProjectById(@Payload() payload: { id: string; userId: string }) {
+    return this.projectsService.getProjectById(payload.id, payload.userId);
   }
 
   @MessagePattern({ cmd: 'create-project' })
@@ -184,5 +184,10 @@ export class ProjectsController {
   @MessagePattern({ cmd: 'get-task-attachments' })
   async handleGetTaskAttachments(@Payload() data: { taskId: string }) {
     return this.tasksService.getTaskAttachments(data.taskId);
+  }
+
+  @MessagePattern({ cmd: 'get-task' })
+  getTask(@Payload() payload: { id: string }) {
+    return this.tasksService.getTaskById(payload.id);
   }
 }

@@ -255,6 +255,30 @@ export class TasksService {
     return { success: true };
   }
 
+  async getTaskById(taskId: string): Promise<TaskEntity> {
+    const task = await this.taskRepository.findByCondition({
+      where: { id: taskId },
+      relations: [
+        'assignee',
+        'reporter',
+        'project',
+        'labels',
+        'sprint',
+        'comments',
+        'comments.author',
+        'attachments',
+        'workLogs',
+        'workLogs.user',
+      ],
+    });
+
+    if (!task) {
+      throw new RpcException(new NotFoundException('Task not found'));
+    }
+
+    return task;
+  }
+
   async addWorkLog(userId: string, dto: AddWorkLogDto): Promise<TaskEntity> {
     const { taskId, timeSpent, workDate } = dto;
 
