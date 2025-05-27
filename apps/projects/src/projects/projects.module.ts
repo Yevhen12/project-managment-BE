@@ -7,6 +7,7 @@ import {
   InviteEntity,
   InviteRepositiry,
   LabelEntity,
+  PAYMENTS_SERVICE,
   PostgresDBModule,
   PROJECT_SERVICE,
   ProjectEntity,
@@ -29,10 +30,15 @@ import { SprintService } from '../sprints/sprints.service';
 import { SprintRepository } from '@/shared/repositories/sprint.repository';
 import { AttachmentRepository } from '@/shared/repositories/attachment.repository';
 import { AwsS3Service } from '@/shared/services/aws-s3.service';
+import { AnalyticsService } from '../analytics/alalyticsService';
 
 @Module({
   imports: [
     RmqModule.registerRmq(PROJECT_SERVICE, process.env.RABBITMQ_PROJECTS_QUEUE),
+    RmqModule.registerRmq(
+      PAYMENTS_SERVICE,
+      process.env.RABBITMQ_PAYMENTS_QUEUE,
+    ),
     RmqModule.registerRmq(USERS_SERVICE, process.env.RABBITMQ_USERS_QUEUE),
     PostgresDBModule,
     TypeOrmModule.forFeature([
@@ -54,6 +60,7 @@ import { AwsS3Service } from '@/shared/services/aws-s3.service';
     TasksService,
     SprintService,
     AwsS3Service,
+    AnalyticsService,
     // SprintCleanupService,
     {
       provide: 'ProjectRepositoryInterface',

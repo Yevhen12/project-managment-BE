@@ -24,6 +24,7 @@ import {
 } from '@nestjs/common';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
+import { AnalyticsService } from '../analytics/alalyticsService';
 
 @Injectable()
 export class ProjectsService {
@@ -37,6 +38,7 @@ export class ProjectsService {
     @Inject('SprintRepositiryInterface')
     private readonly sprintRepository: SprintRepositoryInterface,
     @Inject(USERS_SERVICE) private readonly usersService: ClientProxy,
+    private readonly analyticsService: AnalyticsService,
   ) {}
   async getProjectById(id: string, userId: string): Promise<any> {
     const project = await this.projectRepository.findByCondition({
@@ -431,5 +433,23 @@ export class ProjectsService {
         message: 'Internal error',
       });
     }
+  }
+  async getAnalytics(projectId: string, userId: string) {
+    const member = await this.teamMemberRepository.findByCondition({
+      where: { userId, project: { id: projectId } },
+      relations: ['project'],
+    });
+
+    if (!member) {
+      throw new RpcException(
+        new ForbiddenException('Not a member of this project'),
+      );
+    }
+
+    if (member.role === PROJECT_ROLES.ADMIN) {
+      return this.analyticsService.getAdminAnalytics(projectId);
+    }
+
+    return this.analyticsService.getDeveloperAnalytics(projectId, userId);
   }
 }

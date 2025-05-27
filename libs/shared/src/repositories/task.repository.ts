@@ -16,4 +16,14 @@ export class TaskRepository
   ) {
     super(TaskRepository);
   }
+  async updateMany(
+    taskIds: string[],
+    data: Partial<TaskEntity>,
+  ): Promise<void> {
+    await this.TaskRepository.createQueryBuilder()
+      .update(TaskEntity)
+      .set(data)
+      .whereInIds(taskIds)
+      .execute();
+  }
 }

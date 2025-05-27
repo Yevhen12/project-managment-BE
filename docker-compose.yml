@@ -44,6 +44,21 @@ services:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     command: npm run start:dev projects
+  payments:
+    build:
+      context: ./
+      dockerfile: ./apps/payments/Dockerfile
+    ports:
+      - '3004:3004'
+    env_file:
+      - .env
+    depends_on:
+      - rabbitmq
+      - postgres
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run start:dev payments
   auth:
     build:
       context: ./

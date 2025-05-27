@@ -209,7 +209,9 @@ export class TasksService {
       task.reporter = { id: reporter } as UserEntity;
     }
 
-    if (sprintId) {
+    if (sprintId === null) {
+      task.sprint = null;
+    } else if (sprintId) {
       task.sprint = { id: sprintId } as SprintEntity;
     }
 

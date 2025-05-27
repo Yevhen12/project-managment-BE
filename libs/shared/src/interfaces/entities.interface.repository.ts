@@ -8,6 +8,7 @@ import { WorkLogEntity } from '../entities/work-log.entity';
 import { CommentEntity } from '../entities/comment.entity';
 import { SprintEntity } from '../entities/sprint.entity';
 import { AttachmentEntity } from '../entities/attachment.entity';
+import { DeepPartial } from 'typeorm';
 
 export interface UserRepositoryInterface
   extends BaseInterfaceRepository<UserEntity> {}
@@ -22,7 +23,9 @@ export interface InviteRepositoryInterface
   extends BaseInterfaceRepository<InviteEntity> {}
 
 export interface TaskRepositoryInterface
-  extends BaseInterfaceRepository<TaskEntity> {}
+  extends BaseInterfaceRepository<TaskEntity> {
+  updateMany: (taskIds: string[], data: Partial<TaskEntity>) => Promise<void>;
+}
 
 export interface WorkLogRepositoryInterface
   extends BaseInterfaceRepository<WorkLogEntity> {}

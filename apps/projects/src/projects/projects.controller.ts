@@ -16,6 +16,7 @@ import { AddWorkLogDto } from '@/shared/dtos/projects/AddWorkLog.dto';
 import { CreateSprintDto } from '@/shared/dtos/projects/CreateSprint.dto';
 import { SprintService } from '../sprints/sprints.service';
 import { UpdateSprintDto } from '@/shared/dtos/projects/UpdateSprint.dto';
+import { AnalyticsService } from '../analytics/alalyticsService';
 
 @Controller()
 export class ProjectsController {
@@ -23,6 +24,7 @@ export class ProjectsController {
     private readonly projectsService: ProjectsService,
     private readonly tasksService: TasksService,
     private readonly sprintsService: SprintService,
+    private readonly analyticsService: AnalyticsService,
   ) {}
 
   @MessagePattern({ cmd: 'get-project' })
@@ -189,5 +191,27 @@ export class ProjectsController {
   @MessagePattern({ cmd: 'get-task' })
   getTask(@Payload() payload: { id: string }) {
     return this.tasksService.getTaskById(payload.id);
+  }
+
+  @MessagePattern({ cmd: 'get-archived-sprints' })
+  getArchivedSprints(@Payload() payload: { projectId: string }) {
+    return this.sprintsService.getArchivedSprints(payload.projectId);
+  }
+
+  @MessagePattern({ cmd: 'get-admin-analytics' })
+  async getAdminAnalytics(@Payload() { projectId }: { projectId: string }) {
+    return this.analyticsService.getAdminAnalytics(projectId);
+  }
+
+  @MessagePattern({ cmd: 'get-developer-analytics' })
+  async getDeveloperAnalytics(
+    @Payload() { projectId, userId }: { projectId: string; userId: string },
+  ) {
+    return this.analyticsService.getDeveloperAnalytics(projectId, userId);
+  }
+
+  @MessagePattern({ cmd: 'get-analytics' })
+  getAnalytics(@Payload() payload: { projectId: string; userId: string }) {
+    return this.projectsService.getAnalytics(payload.projectId, payload.userId);
   }
 }

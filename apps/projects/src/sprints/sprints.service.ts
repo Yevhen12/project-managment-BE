@@ -40,8 +40,10 @@ export class SprintService {
     private readonly sprintRepository: SprintRepositoryInterface,
     @Inject(USERS_SERVICE) private readonly usersService: ClientProxy,
   ) {}
-  async createSprint(dto: CreateSprintDto): Promise<SprintEntity> {
-    const { name, startDate, endDate, projectId } = dto;
+  async createSprint(
+    dto: CreateSprintDto & { taskIds?: string[] },
+  ): Promise<SprintEntity> {
+    const { name, startDate, endDate, projectId, taskIds = [] } = dto;
 
     const project = await this.projectRepository.findOneById(projectId);
     if (!project) {
@@ -75,6 +77,7 @@ export class SprintService {
       );
     }
 
+    // ✅ Створюємо спринт
     const sprint = this.sprintRepository.create({
       name,
       startDate: start,
@@ -83,7 +86,14 @@ export class SprintService {
       project,
     });
 
-    return await this.sprintRepository.save(sprint);
+    const createdSprint = await this.sprintRepository.save(sprint);
+
+    // ✅ Привʼязуємо задачі до спринта, якщо вони передані
+    if (taskIds.length > 0) {
+      await this.taskRepository.updateMany(taskIds, { sprint: createdSprint });
+    }
+
+    return createdSprint;
   }
 
   async checkAndExpireActiveSprint(projectId: string): Promise<void> {
@@ -124,6 +134,19 @@ export class SprintService {
         isActive: true,
       },
       relations: ['tasks', 'tasks.assignee', 'tasks.reporter', 'tasks.labels'],
+    });
+  }
+
+  async getArchivedSprints(projectId: string): Promise<SprintEntity[]> {
+    return this.sprintRepository.findAll({
+      where: {
+        project: { id: projectId },
+        isActive: false,
+      },
+      relations: ['tasks', 'tasks.assignee', 'tasks.reporter', 'tasks.labels'],
+      order: {
+        completedAt: 'DESC',
+      },
     });
   }
 

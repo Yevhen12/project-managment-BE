@@ -629,4 +629,48 @@ export class ProjectController {
       throw new RpcErrorToHttpException(error.response || DEFAULT_ERROR);
     }
   }
+
+  @UseGuards(AuthGuard)
+  @Get('sprints/archived/:projectId')
+  async getArchivedSprints(@Param('projectId') projectId: string) {
+    try {
+      const sprints = await firstValueFrom(
+        this.projectService.send(
+          { cmd: 'get-archived-sprints' },
+          { projectId },
+        ),
+      );
+
+      return {
+        status: 200,
+        data: sprints,
+        message: 'Archived sprints retrieved',
+      };
+    } catch (error) {
+      throw new RpcErrorToHttpException(error.response || DEFAULT_ERROR);
+    }
+  }
+  @UseGuards(AuthGuard)
+  @Get('projects/:projectId/analytics')
+  async getAnalytics(
+    @Param('projectId') projectId: string,
+    @User('id') userId: string,
+  ) {
+    try {
+      const result = await firstValueFrom(
+        this.projectService.send(
+          { cmd: 'get-analytics' },
+          { projectId, userId },
+        ),
+      );
+
+      return {
+        status: 200,
+        data: result,
+        message: 'Analytics data retrieved',
+      };
+    } catch (error) {
+      throw new RpcErrorToHttpException(error.response || DEFAULT_ERROR);
+    }
+  }
 }

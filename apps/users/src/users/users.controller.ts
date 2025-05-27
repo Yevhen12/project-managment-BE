@@ -42,4 +42,18 @@ export class UsersController {
   ) {
     return this.usersService.updateProfile(payload.id, payload.data);
   }
+
+  @MessagePattern({ cmd: 'mark-user-premium' })
+  async markUserAsPremium(@Payload() data: { userId: string }) {
+    return this.usersService.markUserAsPremium(data.userId);
+  }
+  @MessagePattern({ cmd: 'mark-user-not-premium' })
+  async markUserAsNotPremium(@Payload() data: { userId: string }) {
+    return this.usersService.markUserAsNotPremium(data.userId);
+  }
+
+  @MessagePattern({ cmd: 'check-user-premium' })
+  async checkUserIsPremium(@Payload() data: { userId: string }) {
+    return this.usersService.checkUserIsPremium(data.userId);
+  }
 }

@@ -16,16 +16,22 @@ import {
   InviteEntity,
   PROJECT_SERVICE,
   WorkLogEntity,
+  PAYMENTS_SERVICE,
 } from '@/shared';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthController } from './auth/auth.controller';
 import { ProjectController } from './projects/projects.controller';
+import { PaymentsController } from './payments/payments.controller';
 
 @Module({
   imports: [
     RmqModule.registerRmq(AUTH_SERVICE, process.env.RABBITMQ_AUTH_QUEUE),
     RmqModule.registerRmq(USERS_SERVICE, process.env.RABBITMQ_USERS_QUEUE),
     RmqModule.registerRmq(PROJECT_SERVICE, process.env.RABBITMQ_PROJECTS_QUEUE),
+    RmqModule.registerRmq(
+      PAYMENTS_SERVICE,
+      process.env.RABBITMQ_PAYMENTS_QUEUE,
+    ),
     PostgresDBModule,
     TypeOrmModule.forFeature([
       UserEntity,
@@ -40,6 +46,11 @@ import { ProjectController } from './projects/projects.controller';
       WorkLogEntity,
     ]),
   ],
-  controllers: [UsersController, AuthController, ProjectController],
+  controllers: [
+    UsersController,
+    AuthController,
+    ProjectController,
+    PaymentsController,
+  ],
 })
 export class AppModule {}

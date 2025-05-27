@@ -38,6 +38,9 @@ export class UserEntity {
   @Column({ default: true })
   isActive: boolean;
 
+  @Column({ default: false })
+  isPremium: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

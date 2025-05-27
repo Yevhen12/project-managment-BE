@@ -31,6 +31,7 @@ export class UsersService {
         avatarUrl: true,
         bio: true,
         isActive: true,
+        isPremium: true,
       },
     });
 
@@ -44,7 +45,15 @@ export class UsersService {
   async findByEmail(email: string): Promise<UserEntity> {
     return this.usersRepository.findByCondition({
       where: { email },
-      select: ['id', 'firstName', 'lastName', 'email', 'password', 'isActive'],
+      select: [
+        'id',
+        'firstName',
+        'lastName',
+        'email',
+        'password',
+        'isActive',
+        'isPremium',
+      ],
     });
   }
 
@@ -102,6 +111,7 @@ export class UsersService {
         'phone',
         'avatarUrl',
         'bio',
+        'isPremium',
       ],
     });
 
@@ -110,5 +120,29 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async markUserAsPremium(userId: string) {
+    const user = await this.usersRepository.findOneById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    user.isPremium = true;
+    await this.usersRepository.save(user);
+    return { success: true };
+  }
+
+  async checkUserIsPremium(userId: string): Promise<boolean> {
+    const user = await this.usersRepository.findOneById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    return user.isPremium ?? false;
+  }
+
+  async markUserAsNotPremium(userId: string) {
+    const user = await this.usersRepository.findOneById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    user.isPremium = false;
+    await this.usersRepository.save(user);
+    return { success: true };
   }
 }
