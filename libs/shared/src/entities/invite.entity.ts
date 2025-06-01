@@ -17,7 +17,7 @@ export class InviteEntity {
   email: string;
 
   @Column()
-  sentBy: string; // userId хто запросив
+  sentBy: string;
 
   @Column({
     type: 'enum',
@@ -27,7 +27,7 @@ export class InviteEntity {
   status: INVITE_STATUSES;
 
   @Column()
-  role: string; // developer, admin і т.д.
+  role: string;
 
   @CreateDateColumn()
   createdAt: Date;

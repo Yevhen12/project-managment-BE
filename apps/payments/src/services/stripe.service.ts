@@ -15,7 +15,6 @@ export class StripeService {
   }
 
   async createCheckoutSession(userId: string) {
-    // 🔍 Перевіряємо чи користувач вже преміум
     const isPremium = await firstValueFrom(
       this.usersService.send({ cmd: 'check-user-premium' }, { userId }),
     );
@@ -24,7 +23,6 @@ export class StripeService {
       throw new BadRequestException('User already has a premium subscription');
     }
 
-    // ✅ Створюємо Stripe Checkout Session
     return await this.stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'subscription',

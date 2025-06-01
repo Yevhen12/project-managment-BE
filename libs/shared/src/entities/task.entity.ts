@@ -36,7 +36,7 @@ export class TaskEntity {
   @Column({ type: 'enum', enum: TASK_PRIORITIES })
   priority: TASK_PRIORITIES;
 
-  @ManyToOne(() => UserEntity, { eager: true }) // або через relations у запиті
+  @ManyToOne(() => UserEntity, { eager: true })
   @JoinColumn({ name: 'assigneeId' })
   assignee: UserEntity;
 

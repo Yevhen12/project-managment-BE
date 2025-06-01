@@ -294,7 +294,6 @@ export class ProjectsService {
   }
 
   async getPendingInvitesForUser(userId: string): Promise<any[]> {
-    // Отримуємо юзера, щоб дістати його email
     const user = await firstValueFrom(
       this.usersService.send({ cmd: 'get-user' }, { id: userId }),
     );
@@ -303,7 +302,6 @@ export class ProjectsService {
       throw new RpcException(new NotFoundException('User not found'));
     }
 
-    // Тепер витягуємо всі pending інвайти на цей email
     const invites = await this.inviteRepositiry.findAll({
       where: {
         email: user.email,
@@ -313,7 +311,6 @@ export class ProjectsService {
       order: { createdAt: 'DESC' },
     });
 
-    // enrich
     const result = await Promise.all(
       invites.map(async (invite) => {
         const [team, activeSprint, sender] = await Promise.all([
@@ -355,25 +352,6 @@ export class ProjectsService {
 
     return result;
   }
-
-  // async getPendingInvitesForUser(userId: string): Promise<InviteEntity[]> {
-  //   const user = await firstValueFrom(
-  //     this.usersService.send({ cmd: 'get-user' }, { id: userId }),
-  //   );
-
-  //   if (!user || !user.email) {
-  //     throw new RpcException(new NotFoundException('User not found'));
-  //   }
-
-  //   return this.inviteRepositiry.findAll({
-  //     where: {
-  //       email: user.email,
-  //       status: INVITE_STATUSES.PENDING,
-  //     },
-  //     relations: ['project'],
-  //     order: { createdAt: 'DESC' },
-  //   });
-  // }
 
   async updateTeamMemberRole(
     dto: UpdateTeamMemberRoleDto,

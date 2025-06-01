@@ -13,21 +13,19 @@ export class AuthController {
 
   @MessagePattern({ cmd: 'register' })
   register(@Payload() newUser: CreateUserDto) {
-    console.log('newUser', newUser);
     return this.authService.register(newUser);
   }
 
   @MessagePattern({ cmd: 'login' })
   async login(@Payload() existingUser: LoginUserDto) {
-    console.log('IN AUTH LOGIN', existingUser);
     return this.authService.login(existingUser);
   }
 
-  @MessagePattern({ cmd: 'logout' })
-  async logout(@Payload() { jwt }: { jwt: string }) {
-    console.log('LOG OUT ACTION OCCUR', jwt);
-    // return this.authService.login(jwt);
-  }
+  // @MessagePattern({ cmd: 'logout' })
+  // async logout(@Payload() { jwt }: { jwt: string }) {
+  //   console.log('LOG OUT ACTION OCCUR', jwt);
+  //   // return this.authService.login(jwt);
+  // }
 
   @MessagePattern({ cmd: 'verify-jwt' })
   @UseGuards(JwtGuard)

@@ -41,11 +41,10 @@ export class StripeController {
         this.configService.get('STRIPE_WEBHOOK_SECRET'),
       );
     } catch (err) {
-      console.error('❌ Invalid Stripe signature:', err.message);
+      console.error('Invalid Stripe signature:', err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // Обробка події успішної підписки
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.userId;
@@ -55,16 +54,15 @@ export class StripeController {
           await this.usersService
             .send({ cmd: 'mark-user-premium' }, { userId })
             .toPromise();
-          console.log(`✅ User ${userId} marked as premium`);
+          console.log(`User ${userId} marked as premium`);
         } catch (error) {
-          console.error('❌ Failed to mark user as premium:', error.message);
+          console.error('Failed to mark user as premium:', error.message);
         }
       } else {
-        console.warn('⚠️ No userId found in session metadata.');
+        console.warn('No userId found in session metadata.');
       }
     }
 
-    // Обробка скасування підписки
     if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object as Stripe.Subscription;
       const userId = subscription.metadata?.userId;
@@ -75,18 +73,14 @@ export class StripeController {
             .send({ cmd: 'mark-user-not-premium' }, { userId })
             .toPromise();
           console.log(
-            `🚫 User ${userId} marked as NOT premium (subscription deleted)`,
+            `User ${userId} marked as NOT premium (subscription deleted)`,
           );
         } catch (error) {
-          console.error(
-            '❌ Failed to mark user as not premium:',
-            error.message,
-          );
+          console.error('Failed to mark user as not premium:', error.message);
         }
       }
     }
 
-    // Обробка невдалої оплати
     if (event.type === 'invoice.payment_failed') {
       const invoice = event.data.object;
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -101,9 +95,7 @@ export class StripeController {
           await this.usersService
             .send({ cmd: 'mark-user-not-premium' }, { userId })
             .toPromise();
-          console.log(
-            `⚠️ User ${userId} marked as NOT premium (payment failed)`,
-          );
+          console.log(`User ${userId} marked as NOT premium (payment failed)`);
         }
       }
     }

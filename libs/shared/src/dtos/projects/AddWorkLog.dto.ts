@@ -9,5 +9,5 @@ export class AddWorkLogDto {
   timeSpent: number;
 
   @IsDateString()
-  workDate: string; // ⬅️ дата, яку обрав юзер (yyyy-mm-dd)
+  workDate: string;
 }

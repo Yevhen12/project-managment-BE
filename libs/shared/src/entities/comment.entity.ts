@@ -17,8 +17,8 @@ export class CommentEntity {
   @Column()
   content: string;
 
-  @ManyToOne(() => UserEntity, { eager: true }) // ← щоб одразу підтягувався user
-  @JoinColumn({ name: 'authorId' }) // ← звʼязуємо з колонкою
+  @ManyToOne(() => UserEntity, { eager: true })
+  @JoinColumn({ name: 'authorId' })
   author: UserEntity;
 
   @Column()

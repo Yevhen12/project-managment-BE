@@ -8,7 +8,6 @@ export class PaymentsController {
 
   @MessagePattern({ cmd: 'subcribe' })
   testCall(@Payload() payload: { id: string }) {
-    console.log('IN GET PAYMENTS');
     return this.paymentsService.subscribe(payload.id);
   }
 }

@@ -77,7 +77,6 @@ export class SprintService {
       );
     }
 
-    // ✅ Створюємо спринт
     const sprint = this.sprintRepository.create({
       name,
       startDate: start,
@@ -88,7 +87,6 @@ export class SprintService {
 
     const createdSprint = await this.sprintRepository.save(sprint);
 
-    // ✅ Привʼязуємо задачі до спринта, якщо вони передані
     if (taskIds.length > 0) {
       await this.taskRepository.updateMany(taskIds, { sprint: createdSprint });
     }

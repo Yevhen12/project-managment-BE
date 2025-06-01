@@ -112,7 +112,7 @@ export class TasksService {
         'labels',
         'sprint',
         'workLogs',
-        'workLogs.user', // додано
+        'workLogs.user',
       ],
     });
   }
@@ -231,7 +231,6 @@ export class TasksService {
 
     await this.taskRepository.save(task);
 
-    // 🔄 Повторне отримання для повернення повністю зв'язаної таски
     return await this.taskRepository.findByCondition({
       where: { id },
       relations: [
@@ -241,7 +240,7 @@ export class TasksService {
         'reporter',
         'labels',
         'workLogs',
-        'workLogs.user', // додано
+        'workLogs.user',
       ],
     });
   }
@@ -305,10 +304,10 @@ export class TasksService {
       timeSpent,
       workDate: new Date(workDate),
       user: { id: userId } as any,
-      task: task, // ← саме передаємо ПОВНУ сутність task
+      task: task,
     });
 
-    await this.workLogRepository.save(workLog); // ← важливо зберегти перед task.loggedTime
+    await this.workLogRepository.save(workLog);
 
     await this.taskRepository.update(task.id, {
       loggedTime: (task.loggedTime || 0) + timeSpent,
@@ -383,7 +382,7 @@ export class TasksService {
       throw new RpcException(new NotFoundException('Task not found'));
     }
 
-    const fileUrl = await this.aswS3Service.uploadFile(file); // <-- повертає публічний URL
+    const fileUrl = await this.aswS3Service.uploadFile(file);
 
     const attachment = this.attachmentRepository.create({
       url: fileUrl,

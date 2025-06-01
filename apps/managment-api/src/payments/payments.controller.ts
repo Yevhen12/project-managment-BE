@@ -28,7 +28,7 @@ export class PaymentsController {
   @UseGuards(AuthGuard)
   @Post('subscribe')
   async subscribe(@Req() req: UserRequest) {
-    const userId = req.user.id; // або @User('id') userId: string
+    const userId = req.user.id;
 
     console.log('323232323', userId);
     const session = await firstValueFrom(

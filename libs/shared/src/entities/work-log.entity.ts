@@ -27,7 +27,7 @@ export class WorkLogEntity {
   @JoinColumn({ name: 'userId' })
   user: UserEntity;
 
-  @Column() // ця колонка створюється явно
+  @Column()
   userId: string;
 
   @ManyToOne(() => TaskEntity, (task) => task.workLogs, {

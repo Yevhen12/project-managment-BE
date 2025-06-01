@@ -14,22 +14,22 @@ export class AttachmentEntity {
   id: string;
 
   @Column()
-  url: string; // посилання на файл у S3
+  url: string;
 
   @Column()
-  fileName: string; // оригінальна назва файлу
+  fileName: string;
 
   @Column()
-  uploadedBy: string; // userId того, хто завантажив
+  uploadedBy: string;
 
   @ManyToOne(() => TaskEntity, (task) => task.attachments, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'taskId' }) // Явно вказуємо FK
+  @JoinColumn({ name: 'taskId' })
   task: TaskEntity;
 
   @Column()
-  taskId: string; // <-- потрібно явно, щоб мати доступ до taskId без джойна
+  taskId: string;
 
   @CreateDateColumn()
   createdAt: Date;

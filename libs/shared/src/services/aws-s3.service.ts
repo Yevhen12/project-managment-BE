@@ -34,7 +34,7 @@ export class AwsS3Service {
       const command = new PutObjectCommand({
         Bucket: this.bucketName,
         Key: key,
-        Body: Buffer.from(file.buffer.data), // <-- оце ключова зміна
+        Body: Buffer.from(file.buffer.data),
         ContentType: file.mimetype,
       });
 
